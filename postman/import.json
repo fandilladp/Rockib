@@ -1,0 +1,115 @@
+{
+    "info": {
+      "name": "Express MongoDB API",
+      "_postman_id": "12345678-1234-1234-1234-1234567890ab",
+      "description": "Collection for testing Express.js with MongoDB",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Add Log",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"app\": \"testApp\",\n  \"section\": \"testSection\",\n  \"data\": {\"key\": \"value\"},\n  \"createdAt\": \"2024-08-16T00:00:00Z\"\n}"
+          },
+          "url": {
+            "raw": "http://localhost:5000/api/addLog",
+            "protocol": "http",
+            "host": ["localhost"],
+            "port": "5000",
+            "path": ["api", "addLog"]
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "Get Data by App",
+        "request": {
+          "method": "GET",
+          "header": [],
+          "url": {
+            "raw": "http://localhost:5000/api/getData/testApp",
+            "protocol": "http",
+            "host": ["localhost"],
+            "port": "5000",
+            "path": ["api", "getData", "testApp"]
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "Get Data by App and Section",
+        "request": {
+          "method": "GET",
+          "header": [],
+          "url": {
+            "raw": "http://localhost:5000/api/getData/testApp/testSection",
+            "protocol": "http",
+            "host": ["localhost"],
+            "port": "5000",
+            "path": ["api", "getData", "testApp", "testSection"]
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "Get Data with Limit",
+        "request": {
+          "method": "GET",
+          "header": [],
+          "url": {
+            "raw": "http://localhost:5000/api/getData/testApp?limitFrom=100&limitTo=150",
+            "protocol": "http",
+            "host": ["localhost"],
+            "port": "5000",
+            "path": ["api", "getData", "testApp"],
+            "query": [
+              {
+                "key": "limitFrom",
+                "value": "100"
+              },
+              {
+                "key": "limitTo",
+                "value": "150"
+              }
+            ]
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "Get Data by App and Section with Limit",
+        "request": {
+          "method": "GET",
+          "header": [],
+          "url": {
+            "raw": "http://localhost:5000/api/getData/testApp/testSection?limitFrom=100&limitTo=150",
+            "protocol": "http",
+            "host": ["localhost"],
+            "port": "5000",
+            "path": ["api", "getData", "testApp", "testSection"],
+            "query": [
+              {
+                "key": "limitFrom",
+                "value": "100"
+              },
+              {
+                "key": "limitTo",
+                "value": "150"
+              }
+            ]
+          }
+        },
+        "response": []
+      }
+    ]
+  }
+  
