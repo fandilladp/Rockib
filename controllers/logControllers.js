@@ -1,3 +1,4 @@
+const { default: axios } = require("axios");
 const Log = require("../models/db");
 
 const postUtilizationData = async (appName) => {
