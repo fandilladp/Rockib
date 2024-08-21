@@ -6,10 +6,13 @@ const LogSchema = new mongoose.Schema({
         required: true,
     },
     section: {
-        type: String
+        type: String,
+    },
+    subsection: {  // Add subsection field
+        type: String,
     },
     data: {
-        type: mongoose.Schema.Types.Mixed
+        type: mongoose.Schema.Types.Mixed,
     },
     createdAt: {
         type: Date,

@@ -2,12 +2,13 @@ const Log = require('../models/db');
 
 // POST /addLog
 exports.addLog = async (req, res) => {
-    const { app, section, data } = req.body;
+    const { app, section, subsection, data } = req.body;
     
     try {
         const newLog = new Log({
             app,
             section,
+            subsection,  // Include subsection in the new log
             data,
         });
         
@@ -20,12 +21,15 @@ exports.addLog = async (req, res) => {
 
 // GET /getData/:app/:section?
 exports.getData = async (req, res) => {
-    const { app, section } = req.params;
+    const { app, section, subsection } = req.params;
     const { limitFrom, limitTo } = req.query;
 
     let query = { app };
     if (section) {
         query.section = section;
+    }
+    if (subsection) {  // Add subsection to the query if provided
+        query.subsection = subsection;
     }
 
     try {
