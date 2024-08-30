@@ -10,8 +10,8 @@ const dbPassword = process.env.DB_PASSWORD;
 
 // Mongoose connection options
 const connectionOptions = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+  // useNewUrlParser: true,
+  // useUnifiedTopology: true,
   authSource: 'admin', // or another database if you use it for authentication
   user: dbUser,
   pass: dbPassword,
