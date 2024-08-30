@@ -43,21 +43,47 @@ exports.addLog = async (req, res) => {
 };
 
 // GET /getData/:app/:section?
+// or GET /getData?app=xxxx&section=xxxxx&subsection=xxxxxx
 exports.getData = async (req, res) => {
-  const { app, section, subsection } = req.params;
-  const { limitFrom, limitTo } = req.query;
+  let { app, section, subsection } = req.params;
+  const { limitFrom, limitTo, startDate, endDate } = req.query;
+
+  // If app, section, and subsection are not found in params, check query params
+  if (!app) {
+    app = req.query.app;
+  }
+  if (!section) {
+    section = req.query.section;
+  }
+  if (!subsection) {
+    subsection = req.query.subsection;
+  }
+
+  if (!app) {
+    return res.status(400).json({ message: "App parameter is required" });
+  }
 
   let query = { app };
   if (section) {
     query.section = section;
   }
   if (subsection) {
-    // Add subsection to the query if provided
     query.subsection = subsection;
   }
 
+  // Filter by date range if startDate and/or endDate are provided
+  if (startDate || endDate) {
+    query.createdAt = {};
+    if (startDate) {
+      query.createdAt.$gte = new Date(startDate);
+    }
+    if (endDate) {
+      query.createdAt.$lte = new Date(endDate);
+    }
+  }
+
   try {
-    let logsQuery = Log.find(query);
+    let logsQuery = Log.find(query).sort({ createdAt: -1 }); // Sort by createdAt descending
 
     if (limitFrom && limitTo) {
       logsQuery = logsQuery

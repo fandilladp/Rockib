@@ -1,12 +1,13 @@
 const express = require('express');
 const connectDB = require('./config/configDB');
 const logRoutes = require('./routes/logRoutes');
+const verifyToken = require("./secure/verifyToken");
 const NodeCache = require('node-cache');
 require('dotenv').config();
 
 const app = express();
 connectDB();
-
+app.use(verifyToken);
 // Setup cache with a default TTL of 60 seconds
 const cache = new NodeCache({ stdTTL: 60 });
 
