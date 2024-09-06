@@ -1,40 +1,43 @@
 # ROCIKIB | Log Management System
 ![Rockib Logo](./assets/Rockib.webp)
-This project is a simple log management system built using Node.js, Express, and MongoDB. It provides an API for adding logs and retrieving them based on various filters such as application name, sections, and date ranges. The system also integrates with an external utilization monitoring service.
 
-## Features
+Rockib adalah sistem manajemen log sederhana yang dibangun menggunakan Node.js, Express, dan MongoDB. Sistem ini menyediakan API untuk menambah log dan mengambil log berdasarkan berbagai filter, seperti nama aplikasi, bagian, dan rentang tanggal. Sistem juga terintegrasi dengan layanan monitoring utilisasi eksternal.
 
-- **Add Logs**: Store logs with customizable fields including app name, section, subsection, and data.
-- **Retrieve Logs**: Retrieve logs based on application name, section, subsection, date range, and pagination.
-- **Caching**: Caches API responses for improved performance.
-- **External Utilization Data Posting**: Automatically posts log usage data to an external monitoring service.
+## Fitur
 
-## Installation
+- **Tambah Log**: Menyimpan log dengan field yang dapat disesuaikan, termasuk nama aplikasi, bagian, sub-bagian, dan data.
+- **Ambil Log**: Mengambil log berdasarkan nama aplikasi, bagian, sub-bagian, rentang tanggal, dan pagination.
+- **Caching**: Meng-cache respons API untuk meningkatkan performa.
+- **Integrasi Data Utilisasi Eksternal**: Memposting data penggunaan log ke layanan monitoring eksternal secara otomatis.
+- **Pencarian Dinamis**: Mencari log berdasarkan beberapa field dalam data menggunakan regex.
+- **Isolasi Keamanan dengan `app-key`**: Memfilter log berdasarkan `app-key` untuk memastikan hanya data log yang sesuai yang dapat diakses.
 
-### Prerequisites
+## Instalasi
 
-- Node.js (v14 or higher)
+### Prasyarat
+
+- Node.js (v14 atau lebih tinggi)
 - MongoDB
-- npm (Node Package Manager)
+- npm (Node Package Manager) atau `yarn`
 
 ### Setup
 
-1. **Clone the repository**:
+1. **Clone repository**:
 
    ```bash
    git clone https://github.com/fandilladp/Rockib
    cd Rockib
    ```
 
-2. **Install dependencies**:
+2. **Instal dependensi**:
 
    ```bash
    yarn
    ```
 
-3. **Environment Configuration**:
+3. **Konfigurasi Lingkungan**:
 
-   Create a `.env` file in the root directory of your project and configure the following environment variables:
+   Buat file `.env` di direktori root proyek Anda dan atur variabel lingkungan berikut:
 
    ```env
    PORT=5000
@@ -48,32 +51,23 @@ This project is a simple log management system built using Node.js, Express, and
    TOKENUTILITOR=token_for_utilization_service
    ```
 
-   - **PORT**: The port number on which the server will run.
-   - **TOKEN**: Authorization token for the API.
-   - **DB_HOST**: Hostname or IP address of the MongoDB server.
-   - **DB_PORT**: Port number on which MongoDB is running.
-   - **DB_NAME**: Name of the MongoDB database.
-   - **DB_USER**: Username for MongoDB authentication.
-   - **DB_PASSWORD**: Password for MongoDB authentication.
-   - **HOSTUTILITOR**: URL of the external utilization monitoring service.
-   - **TOKENUTILITOR**: Token required to authenticate with the utilization monitoring service.
-
-4. **Start the Server**:
+4. **Jalankan Server**:
 
    ```bash
    npm start
    ```
 
-   The server will start on the port specified in your `.env` file (default is `5000`).
+   Server akan berjalan di port yang ditentukan dalam file `.env` (default adalah `5000`).
 
 ## API Endpoints
 
-### Add Log
+### Tambah Log
 
 - **URL**: `/api/addLog`
 - **Method**: `POST`
-- **Description**: Adds a new log entry to the database.
-- **Request Body**:
+- **Deskripsi**: Menambah entri log baru ke database.
+- **Header Opsional**: `app-key` untuk menyimpan `key` log (opsional).
+- **Body Request**:
 
   ```json
   {
@@ -84,7 +78,7 @@ This project is a simple log management system built using Node.js, Express, and
   }
   ```
 
-- **Response**:
+- **Respons**:
 
   ```json
   {
@@ -95,32 +89,34 @@ This project is a simple log management system built using Node.js, Express, and
       "section": "string",
       "subsection": "string",
       "data": {},
-      "createdAt": "timestamp"
+      "createdAt": "timestamp",
+      "key": "app-key if provided"
     }
   }
   ```
 
-### Retrieve Logs
+### Ambil Log
 
 - **URL**: `/api/getData/:app?/:section?/:subsection?`
 - **Method**: `GET`
-- **Description**: Retrieves logs based on application name, section, subsection, and optional date filters.
+- **Deskripsi**: Mengambil log berdasarkan nama aplikasi, bagian, sub-bagian, dan filter opsional tanggal.
+- **Header Opsional**: `app-key` untuk memfilter log berdasarkan key yang sesuai.
 - **Query Parameters**:
-  - `app`: Name of the application (required).
-  - `section`: Section name (optional).
-  - `subsection`: Subsection name (optional).
-  - `startDate`: Filter logs starting from this date (optional).
-  - `endDate`: Filter logs up to this date (optional).
-  - `limitFrom`: Pagination start (optional).
-  - `limitTo`: Pagination end (optional).
+  - `app`: Nama aplikasi (wajib).
+  - `section`: Nama bagian (opsional).
+  - `subsection`: Nama sub-bagian (opsional).
+  - `startDate`: Filter log mulai dari tanggal ini (opsional).
+  - `endDate`: Filter log sampai tanggal ini (opsional).
+  - `limitFrom`: Pagination start (opsional).
+  - `limitTo`: Pagination end (opsional).
 
-- **Example**:
+- **Contoh**:
 
   ```bash
   GET /api/getData?app=testApp&startDate=2024-08-20&endDate=2024-08-29
   ```
 
-- **Response**:
+- **Respons**:
 
   ```json
   [
@@ -130,24 +126,62 @@ This project is a simple log management system built using Node.js, Express, and
       "section": "string",
       "subsection": "string",
       "data": {},
+      "createdAt": "timestamp",
+      "key": "app-key if exists"
+    },
+    ...
+  ]
+  ```
+
+### Pencarian Log dengan Elastic Search
+
+- **URL**: `/api/elasticLogs/:app/:section/:subsection?`
+- **Method**: `GET`
+- **Deskripsi**: Mencari log berdasarkan aplikasi, bagian, sub-bagian, serta data yang ada dalam field `data` menggunakan regex.
+- **Header Opsional**: `app-key` untuk memfilter log yang memiliki `key`.
+- **Query Parameters**:
+  - `data`: String yang akan dicari dalam beberapa field (`data.id`, `data._id`, `data.page`, `data.key`).
+  
+- **Contoh**:
+
+  ```bash
+  GET /api/elasticLogs/testApp/auth/login?data=fandilaz
+  ```
+
+- **Respons**:
+
+  ```json
+  [
+    {
+      "_id": "unique_log_id",
+      "app": "string",
+      "section": "string",
+      "subsection": "string",
+      "data": {
+        "id": "string",
+        "page": "string",
+        "key": "string"
+      },
       "createdAt": "timestamp"
     },
     ...
   ]
   ```
 
-## Caching
+## Fitur Tambahan
 
-The application uses a simple in-memory cache to store API responses for 60 seconds. This helps in reducing the load on the database for frequently accessed data.
+### Caching
 
-## External Utilization Monitoring
+Aplikasi menggunakan cache sederhana berbasis in-memory untuk menyimpan respons API selama 60 detik. Ini membantu mengurangi beban pada database untuk data yang sering diakses.
 
-The application posts usage data to an external utilization monitoring service every time a log is added or retrieved. This can be configured using the `HOSTUTILITOR` and `TOKENUTILITOR` environment variables.
+### Pengawasan Utilisasi Eksternal
 
-## Self-Hosting
+Aplikasi memposting data penggunaan log ke layanan monitoring eksternal setiap kali log ditambahkan atau diambil. Ini dapat dikonfigurasi menggunakan variabel lingkungan `HOSTUTILITOR` dan `TOKENUTILITOR`.
 
-To self-host this project, follow the setup instructions mentioned above. Ensure that your MongoDB instance is accessible, and your environment variables are correctly configured in the `.env` file.
+### Isolasi Keamanan dengan `app-key`
+
+Setiap log dapat memiliki `key` yang disertakan dalam header `app-key`. Ketika mengambil log, jika `app-key` disediakan, hanya log yang memiliki `key` yang sama yang akan dikembalikan. Jika `app-key` tidak disediakan, hanya log tanpa `key` yang akan dikembalikan.
 
 ---
 
-This documentation should help developers understand how to set up and use the log management system effectively. Feel free to modify the documentation to fit your specific project details.
+Dokumentasi ini bertujuan untuk membantu pengembang memahami cara menggunakan dan mengonfigurasi sistem manajemen log **Rockib** dengan fitur tambahan pencarian dinamis dan isolasi data berbasis `key`. Jangan ragu untuk memodifikasi sesuai kebutuhan proyek Anda.
