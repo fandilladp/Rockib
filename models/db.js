@@ -14,6 +14,9 @@ const LogSchema = new mongoose.Schema({
     data: {
         type: mongoose.Schema.Types.Mixed,
     },
+    key: { 
+        type: String,
+    },
     createdAt: {
         type: Date,
         default: Date.now,

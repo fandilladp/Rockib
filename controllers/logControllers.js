@@ -25,30 +25,41 @@ const postUtilizationData = async (appName) => {
 // POST /addLog
 exports.addLog = async (req, res) => {
   const { app, section, subsection, data } = req.body;
+  const key = req.headers['app-key'];  // Ambil app-key dari header, bisa undefined jika tidak ada
 
   try {
+
     const newLog = new Log({
       app,
       section,
-      subsection, // Include subsection in the new log
+      subsection,
       data,
     });
+    if (key) {
+      newLog.key = key;
+    }
 
     await newLog.save();
+
     res.status(201).json({ message: "Log added successfully", newLog });
+
     postUtilizationData("Rockib_postLogs");
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
+
 // GET /getData/:app/:section?
 // or GET /getData?app=xxxx&section=xxxxx&subsection=xxxxxx
 exports.getData = async (req, res) => {
   let { app, section, subsection } = req.params;
   const { limitFrom, limitTo, startDate, endDate } = req.query;
+  const appKey = req.headers['app-key'];  // Ambil app-key dari header
 
-  // If app, section, and subsection are not found in params, check query params
+  console.log("Received app-key:", appKey);  // Debug log
+  console.log("Received app:", app);  // Debug log
+
   if (!app) {
     app = req.query.app;
   }
@@ -63,7 +74,9 @@ exports.getData = async (req, res) => {
     return res.status(400).json({ message: "App parameter is required" });
   }
 
+  // Membuat query berdasarkan apakah app-key ada atau tidak
   let query = { app };
+
   if (section) {
     query.section = section;
   }
@@ -71,19 +84,19 @@ exports.getData = async (req, res) => {
     query.subsection = subsection;
   }
 
-  // Filter by date range if startDate and/or endDate are provided
-  if (startDate || endDate) {
-    query.createdAt = {};
-    if (startDate) {
-      query.createdAt.$gte = new Date(startDate);
-    }
-    if (endDate) {
-      query.createdAt.$lte = new Date(endDate);
-    }
+  if (appKey) {
+    // Jika app-key ada di header, hanya cari data yang memiliki key yang sesuai
+    query.key = appKey;
+  } else {
+    // Jika tidak ada app-key, hanya cari data yang tidak memiliki key
+    query.key = { $exists: false };
   }
 
+  // Debug log untuk memeriksa query sebelum pencarian
+  console.log("Query to MongoDB:", query);
+
   try {
-    let logsQuery = Log.find(query).sort({ createdAt: -1 }); // Sort by createdAt descending
+    let logsQuery = Log.find(query).sort({ createdAt: -1 });
 
     if (limitFrom && limitTo) {
       logsQuery = logsQuery
@@ -92,18 +105,24 @@ exports.getData = async (req, res) => {
     }
 
     const logs = await logsQuery.exec();
+    if (!logs.length) {
+      return res.status(404).json({ message: "No logs found matching the criteria" });
+    }
+
     res.status(200).json(logs);
-    postUtilizationData("Rockib_getLogs");
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
+
+// GET /searchLogs/:app/:section/:subsection?
 // GET /searchLogs/:app/:section/:subsection?
 exports.searchLogs = async (req, res) => {
   let { app, section, subsection } = req.params;
   const { data } = req.query;
+  const appKey = req.headers['app-key'];  // Ambil app-key dari header
 
-  // Check if app, section, and subsection exist in params or query
   if (!app) {
     app = req.query.app;
   }
@@ -114,46 +133,47 @@ exports.searchLogs = async (req, res) => {
     subsection = req.query.subsection;
   }
 
-  // Return error if app is missing
   if (!app) {
     return res.status(400).json({ message: "App parameter is required" });
   }
 
-  // Construct the query object
   let query = { app, section };
+
   if (subsection) {
     query.subsection = subsection;
   }
 
-  // Dynamically search across all fields in `data`
+  // Pencarian dinamis pada field `data`
   if (data) {
     query['$or'] = [
       { 'data.id': { $regex: new RegExp(data, 'i') } },
       { 'data._id': { $regex: new RegExp(data, 'i') } },
       { 'data.page': { $regex: new RegExp(data, 'i') } },
       { 'data.key': { $regex: new RegExp(data, 'i') } },
-      // Add more dynamic fields or apply to all fields within `data`
     ];
   }
 
+  // Jika app-key ada di header, filter data yang memiliki key sesuai dengan app-key
+  if (appKey) {
+    query.key = appKey;
+  } else {
+    // Jika tidak ada app-key, hanya kembalikan data tanpa field `key`
+    query.key = { $exists: false };
+  }
+
   try {
-    // Execute query and sort results by createdAt (descending)
     const logs = await Log.find(query).sort({ createdAt: -1 }).exec();
     
-    // Check if any logs are found
     if (!logs.length) {
       return res.status(404).json({ message: "No logs found matching the criteria" });
     }
 
-    // Return the found logs
     res.status(200).json(logs);
-    
-    // Post utilization data (optional, based on your logic)
     postUtilizationData("Rockib_searchLogs");
-    
   } catch (err) {
-    // Handle server errors
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
+
 
