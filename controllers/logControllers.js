@@ -110,6 +110,7 @@ exports.getData = async (req, res) => {
     }
 
     res.status(200).json(logs);
+    postUtilizationData("Rockib_GetLogs");
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
@@ -169,7 +170,7 @@ exports.searchLogs = async (req, res) => {
     }
 
     res.status(200).json(logs);
-    postUtilizationData("Rockib_searchLogs");
+    postUtilizationData("Rockib_ElasticLogs");
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
