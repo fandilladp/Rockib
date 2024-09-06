@@ -98,3 +98,62 @@ exports.getData = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+// GET /searchLogs/:app/:section/:subsection?
+exports.searchLogs = async (req, res) => {
+  let { app, section, subsection } = req.params;
+  const { data } = req.query;
+
+  // Check if app, section, and subsection exist in params or query
+  if (!app) {
+    app = req.query.app;
+  }
+  if (!section) {
+    section = req.query.section;
+  }
+  if (!subsection) {
+    subsection = req.query.subsection;
+  }
+
+  // Return error if app is missing
+  if (!app) {
+    return res.status(400).json({ message: "App parameter is required" });
+  }
+
+  // Construct the query object
+  let query = { app, section };
+  if (subsection) {
+    query.subsection = subsection;
+  }
+
+  // Dynamically search across all fields in `data`
+  if (data) {
+    query['$or'] = [
+      { 'data.id': { $regex: new RegExp(data, 'i') } },
+      { 'data._id': { $regex: new RegExp(data, 'i') } },
+      { 'data.page': { $regex: new RegExp(data, 'i') } },
+      { 'data.key': { $regex: new RegExp(data, 'i') } },
+      // Add more dynamic fields or apply to all fields within `data`
+    ];
+  }
+
+  try {
+    // Execute query and sort results by createdAt (descending)
+    const logs = await Log.find(query).sort({ createdAt: -1 }).exec();
+    
+    // Check if any logs are found
+    if (!logs.length) {
+      return res.status(404).json({ message: "No logs found matching the criteria" });
+    }
+
+    // Return the found logs
+    res.status(200).json(logs);
+    
+    // Post utilization data (optional, based on your logic)
+    postUtilizationData("Rockib_searchLogs");
+    
+  } catch (err) {
+    // Handle server errors
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
