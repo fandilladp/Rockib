@@ -9,7 +9,7 @@ const app = express();
 connectDB();
 app.use(verifyToken);
 // Setup cache with a default TTL of 60 seconds
-const cache = new NodeCache({ stdTTL: 60 });
+const cache = new NodeCache({ stdTTL: 10 });
 
 // Middleware to check cache before processing request
 app.use((req, res, next) => {
