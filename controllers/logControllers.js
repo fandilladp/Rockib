@@ -144,13 +144,14 @@ exports.searchLogs = async (req, res) => {
     query.subsection = subsection;
   }
 
-  // Pencarian dinamis pada field `data`
+  // Jika ada parameter `data`, cari exact match di salah satu dari 4 field
   if (data) {
+    console.log("oke")
     query['$or'] = [
-      { 'data.id': { $regex: new RegExp(data, 'i') } },
-      { 'data._id': { $regex: new RegExp(data, 'i') } },
-      { 'data.page': { $regex: new RegExp(data, 'i') } },
-      { 'data.key': { $regex: new RegExp(data, 'i') } },
+      { 'data.id': data },    // Mencari exact match pada 'data.id'
+      { 'data._id': data },   // Mencari exact match pada 'data._id'
+      { 'data.page': data },  // Mencari exact match pada 'data.page'
+      { 'data.key': data }    // Mencari exact match pada 'data.key'
     ];
   }
 
@@ -165,8 +166,9 @@ exports.searchLogs = async (req, res) => {
   try {
     const logs = await Log.find(query).sort({ createdAt: -1 }).exec();
     
+    // Jika tidak ada data yang cocok
     if (!logs.length) {
-      return res.status(404).json({ message: "No logs found matching the criteria" });
+      return res.status(200).json({ message: "Data tidak tersedia", data: [] });
     }
 
     res.status(200).json(logs);
@@ -175,6 +177,8 @@ exports.searchLogs = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
+
 
 
 
